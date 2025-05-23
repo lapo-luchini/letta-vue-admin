@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { LettaClient } from '@letta-ai/letta-client'
 
 const letta = new LettaClient({
@@ -7,12 +7,24 @@ const letta = new LettaClient({
 })
 
 const agents = ref([])
+const selectedAgent = ref(null)
+const messages = ref([])
 
 onMounted(async () => {
   try {
     agents.value = await letta.agents.list()
   } catch (error) {
     console.error('Error fetching agents:', error)
+  }
+})
+
+watch(selectedAgent, async (newAgentId) => {
+  if (newAgentId) {
+    try {
+      messages.value = await letta.agents.messages.list(newAgentId)
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+    }
   }
 })
 </script>
@@ -27,14 +39,12 @@ onMounted(async () => {
   </header>
 
   <main>
-    <select id="agents">
+    <select id="agents" v-model="selectedAgent">
       <option value="">Select an option</option>
-      <option v-for="option in agents" :key="option.id">{{ option.name }}</option>
+      <option v-for="agent in agents" :key="agent.id" :value="agent.id">{{ agent.name }}</option>
     </select>
     <ul id="messages">
-      <li>Message 1</li>
-      <li>Message 2</li>
-      <li>Message 3</li>
+      <li v-for="message in messages" :key="message.id">{{ message.content }}</li>
     </ul>
   </main>
 </template>
