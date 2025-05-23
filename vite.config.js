@@ -5,20 +5,23 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [vue(), vueDevTools()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
-  server: {
-    proxy: {
-      '/api': {
-        target: import.meta.env.VITE_LETTA_URL,
-        changeOrigin: true,
-        rewrite: path => path.replace(/^\/api/, ''),
+export default defineConfig(mode => {
+  const env = loadEnv(mode, process.cwd(), 'VITE_')
+  return {
+    plugins: [vue(), vueDevTools()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
-  },
+    server: {
+      proxy: {
+        '/api': {
+          target: env.VITE_LETTA_URL,
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/api/, ''),
+        },
+      },
+    },
+  }
 })
