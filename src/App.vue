@@ -1,10 +1,16 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { LettaClient } from '@letta-ai/letta-client'
+import { marked } from 'marked'
 
 const letta = new LettaClient({
   baseUrl: '/api/',
 })
+
+const markdownOptions = {
+  gfm: true,
+  breaks: true,
+}
 
 const agents = ref([])
 const selectedAgent = ref(null)
@@ -43,9 +49,26 @@ watch(selectedAgent, async (newAgentId) => {
       <option value="">Select an option</option>
       <option v-for="agent in agents" :key="agent.id" :value="agent.id">{{ agent.name }}</option>
     </select>
-    <ul id="messages">
-      <li v-for="message in messages" :key="message.id">{{ message.content }}</li>
-    </ul>
+    <div id="messages">
+      <div class="message" v-for="message in messages" :key="message.id">
+        <div class="message-icon" :title="message.messageType">
+          <span v-if="message.messageType === 'user_message'">👤</span>
+          <span v-else-if="message.messageType === 'assistant_message'">🤖</span>
+          <span v-else-if="message.messageType === 'reasoning_message'">🧠</span>
+          <span v-else>❓</span>
+        </div>
+        <div class="message-bubble">
+          <div v-if="message.content" v-html="marked.parse(message.content, markdownOptions)"></div>
+          <div
+            v-else-if="message.reasoning"
+            v-html="marked.parse(message.reasoning, markdownOptions)"
+          ></div>
+          <div v-else>
+            <pre><code>{{ JSON.stringify(message, null, 2) }}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -59,11 +82,31 @@ header {
   margin: 0 auto 2rem;
 }
 
+.message {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.message-icon {
+  margin-right: 10px;
+  font-size: 1.2em;
+  flex-shrink: 0;
+  cursor: help; /* Optional: to indicate it's a tooltip */
+}
+
+.message-bubble {
+  background-color: #f1f1f17f;
+  padding: 10px 15px;
+  border-radius: 10px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
 @media (min-width: 1024px) {
   header {
     display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
   }
 
   .logo {

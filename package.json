@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@letta-ai/letta-client": "^0.1.123",
+    "marked": "^15.0.12",
     "vue": "^3.5.13"
   },
   "devDependencies": {
