@@ -1,4 +1,21 @@
-<script setup></script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { LettaClient } from '@letta-ai/letta-client'
+
+const letta = new LettaClient({
+  baseUrl: '/api/',
+})
+
+const agents = ref([])
+
+onMounted(async () => {
+  try {
+    agents.value = await letta.agents.list()
+  } catch (error) {
+    console.error('Error fetching agents:', error)
+  }
+})
+</script>
 
 <template>
   <header>
@@ -10,6 +27,10 @@
   </header>
 
   <main>
+    <select id="agents">
+      <option value="">Select an option</option>
+      <option v-for="option in agents" :key="option.id">{{ option.name }}</option>
+    </select>
     <ul id="messages">
       <li>Message 1</li>
       <li>Message 2</li>
