@@ -55,14 +55,24 @@ watch(selectedAgent, async (newAgentId) => {
           <span v-if="message.messageType === 'user_message'">👤</span>
           <span v-else-if="message.messageType === 'assistant_message'">🤖</span>
           <span v-else-if="message.messageType === 'reasoning_message'">🧠</span>
+          <span v-else-if="message.messageType === 'tool_call_message'">📤</span>
+          <span v-else-if="message.messageType === 'tool_return_message'">📥</span>
           <span v-else>❓</span>
         </div>
-        <div class="message-bubble">
+        <div class="message-bubble" :class="message.messageType">
           <div v-if="message.content" v-html="marked.parse(message.content, markdownOptions)"></div>
           <div
             v-else-if="message.reasoning"
             v-html="marked.parse(message.reasoning, markdownOptions)"
           ></div>
+          <div v-else-if="message.toolCall">
+            <strong>{{ message.toolCall.name }}</strong>
+            <pre>{{ JSON.stringify(JSON.parse(message.toolCall.arguments), null, 2) }}</pre>
+          </div>
+          <div v-else-if="message.toolReturn">
+            <strong>{{ message.name }}</strong>
+            <pre>{{ JSON.stringify(JSON.parse(message.toolReturn), null, 2) }}</pre>
+          </div>
           <div v-else>
             <pre><code>{{ JSON.stringify(message, null, 2) }}</code></pre>
           </div>
@@ -82,6 +92,10 @@ header {
   margin: 0 auto 2rem;
 }
 
+#messages {
+  max-width: 70vw;
+}
+
 .message {
   position: relative;
   display: flex;
@@ -97,11 +111,31 @@ header {
 }
 
 .message-bubble {
-  background-color: #f1f1f17f;
+  background-color: #f1f1f1;
   padding: 10px 15px;
   border-radius: 10px;
   max-width: 70%;
   word-wrap: break-word;
+  color: #000; /* Dark text on light background */
+  overflow-x: auto;
+}
+
+.message-bubble.user_message {
+  background-color: #d1e7dd;
+  align-self: flex-end;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.message-bubble.reasoning_message {
+  background-color: #495057;
+  color: #fff;
+}
+
+.message-bubble.tool_call_message,
+.message-bubble.tool_return_message {
+  background-color: #495057;
+  color: #fff;
 }
 
 @media (min-width: 1024px) {
