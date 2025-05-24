@@ -13,7 +13,7 @@ const markdownOptions = {
 }
 
 const agents = ref([])
-const selectedAgent = ref(null)
+const selectedAgent = ref('')
 const messages = ref([])
 
 onMounted(async () => {
@@ -41,14 +41,14 @@ watch(selectedAgent, async (newAgentId) => {
 
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
+      <select id="agents" v-model="selectedAgent">
+        <option value="">Select an agent:</option>
+        <option v-for="agent in agents" :key="agent.id" :value="agent.id">{{ agent.name }}</option>
+      </select>
     </div>
   </header>
 
   <main>
-    <select id="agents" v-model="selectedAgent">
-      <option value="">Select an option</option>
-      <option v-for="agent in agents" :key="agent.id" :value="agent.id">{{ agent.name }}</option>
-    </select>
     <div id="messages">
       <div class="message" v-for="message in messages" :key="message.id">
         <div class="message-icon" :title="message.messageType">
