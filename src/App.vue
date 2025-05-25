@@ -15,6 +15,7 @@ const markdownOptions = {
 const agents = ref([])
 const selectedAgent = ref('')
 const messages = ref([])
+const newMessage = ref('')
 
 onMounted(async () => {
   try {
@@ -33,6 +34,40 @@ watch(selectedAgent, async (newAgentId) => {
     }
   }
 })
+
+const sendMessage = async () => {
+  if (!newMessage.value.trim() || !selectedAgent.value) return
+
+  try {
+    const response = await letta.agents.messages.createStream(selectedAgent.value, {
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: newMessage.value,
+            },
+          ],
+        },
+      ],
+    })
+    newMessage.value = ''
+    for await (const item of response) {
+      messages.value.push(item)
+    }
+  } catch (error) {
+    console.error('Error sending message:', error)
+  }
+}
+
+// Handle Enter key press to send message
+const handleEnter = (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault()
+    sendMessage()
+  }
+}
 </script>
 
 <template>
@@ -78,6 +113,13 @@ watch(selectedAgent, async (newAgentId) => {
           </div>
         </div>
       </div>
+    </div>
+    <div id="message-new" class="message-bubble user_message">
+      <textarea
+        v-model="newMessage"
+        @keydown.enter="handleEnter"
+        placeholder="Type a message..."
+      ></textarea>
     </div>
   </main>
 </template>
@@ -136,6 +178,17 @@ header {
 .message-bubble.tool_return_message {
   background-color: #495057;
   color: #fff;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: none;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
 }
 
 @media (min-width: 1024px) {
