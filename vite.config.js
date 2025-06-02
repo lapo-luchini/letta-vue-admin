@@ -16,10 +16,9 @@ export default defineConfig(mode => {
     },
     server: {
       proxy: {
-        '/api': {
+        '/v1': {
           target: env.VITE_LETTA_URL,
           changeOrigin: true,
-          rewrite: path => path.replace(/^\/api/, ''),
         },
       },
     },

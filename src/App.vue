@@ -4,7 +4,7 @@ import { LettaClient } from '@letta-ai/letta-client'
 import { marked } from 'marked'
 
 const letta = new LettaClient({
-  baseUrl: '/api/',
+  baseUrl: '/',
 })
 
 const markdownOptions = {
