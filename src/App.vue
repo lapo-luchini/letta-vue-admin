@@ -39,6 +39,12 @@ const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedAgent.value) return
 
   try {
+    const msg = newMessage.value
+    newMessage.value = ''
+    messages.value.push({
+      messageType: 'user_message',
+      content: msg,
+    })
     const response = await letta.agents.messages.createStream(selectedAgent.value, {
       messages: [
         {
@@ -46,13 +52,12 @@ const sendMessage = async () => {
           content: [
             {
               type: 'text',
-              text: newMessage.value,
+              text: msg,
             },
           ],
         },
       ],
     })
-    newMessage.value = ''
     for await (const item of response) {
       messages.value.push(item)
     }
