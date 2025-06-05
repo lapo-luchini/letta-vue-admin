@@ -14,8 +14,26 @@ const markdownOptions = {
 
 const agents = ref([])
 const selectedAgent = ref('')
+const memoryBlocks = ref([])
 const messages = ref([])
 const newMessage = ref('')
+
+const showModalWindow = ref(false)
+const modalTitle = ref('')
+const modalText = ref('')
+
+const showModal = async (type, name) => {
+  showModalWindow.value = true
+  if (type === 'core') {
+    modalTitle.value = 'Core memory: ' + name
+    modalText.value = '…'
+    modalText.value = (await letta.agents.blocks.retrieve(selectedAgent.value, name)).value
+  }
+}
+
+const closeModal = () => {
+  showModalWindow.value = false
+}
 
 onMounted(async () => {
   try {
@@ -28,6 +46,7 @@ onMounted(async () => {
 watch(selectedAgent, async (newAgentId) => {
   if (newAgentId) {
     try {
+      memoryBlocks.value = await letta.agents.blocks.list(selectedAgent.value)
       messages.value = await letta.agents.messages.list(newAgentId)
     } catch (error) {
       console.error('Error fetching messages:', error)
@@ -57,6 +76,7 @@ const sendMessage = async () => {
           ],
         },
       ],
+      // stream_tokens: true,
     })
     for await (const item of response) {
       messages.value.push(item)
@@ -81,10 +101,31 @@ const handleEnter = (event) => {
 
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
-      <select id="agents" v-model="selectedAgent">
-        <option value="">Select an agent:</option>
-        <option v-for="agent in agents" :key="agent.id" :value="agent.id">{{ agent.name }}</option>
-      </select>
+      <div>
+        <select id="agents" v-model="selectedAgent">
+          <option value="">Select an agent:</option>
+          <option v-for="agent in agents" :key="agent.id" :value="agent.id">
+            {{ agent.name }}
+          </option>
+        </select>
+      </div>
+      <div>
+        Core memory:
+        <button
+          v-for="block in memoryBlocks"
+          :key="block.id"
+          @click="showModal('core', block.label)"
+        >
+          {{ block.label }}
+        </button>
+      </div>
+      <div v-if="showModalWindow" class="modal">
+        <div class="modal-content">
+          <span class="close" @click="closeModal">&times;</span>
+          <h2>{{ modalTitle }}</h2>
+          <p>{{ modalText }}</p>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -137,6 +178,47 @@ header {
 .logo {
   display: block;
   margin: 0 auto 2rem;
+}
+
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #333;
+  color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.modal-content p {
+  margin: 10px 0 0;
 }
 
 #messages {
