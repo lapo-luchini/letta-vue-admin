@@ -186,9 +186,20 @@ header {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 200px;
+  min-width: 250px; /* Fixed width for smaller screens */
+  max-width: 300px; /* Limit width on larger screens */
   padding: 20px;
   box-sizing: border-box;
+  border-right: 1px solid #444;
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+main {
+  flex: 1; /* Take up remaining space */
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
 }
 
 .logo {
@@ -223,10 +234,12 @@ header {
 }
 
 #messages {
-  max-width: 70vw;
-  padding: 20px;
-  overflow-y: auto;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  overflow-y: auto;
 }
 
 .message {
@@ -281,7 +294,12 @@ pre {
   color: #ccc;
 }
 
-textarea {
+#message-new {
+  flex: 0 0 auto; /* Prevent from growing too much */
+  padding: 10px;
+}
+
+#message-new textarea {
   width: 100%;
   padding: 12px;
   border: 1px solid #ccc;
@@ -293,7 +311,7 @@ textarea {
   transition: border-color 0.3s;
 }
 
-textarea:focus {
+#message-new textarea:focus {
   border-color: #007bff;
 }
 
