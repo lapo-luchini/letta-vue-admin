@@ -85,9 +85,12 @@ const sendMessage = async () => {
       // stream_tokens: true,
     })
 
+    let reloadMemory = false
     for await (const item of response) {
       messages.value.push(item)
+      if (item.messageType === 'tool_return_message' && item.status === 'OK') reloadMemory = true
     }
+    if (reloadMemory) memoryBlocks.value = await letta.agents.blocks.list(selectedAgent.value)
   } catch (err) {
     error.value = `Failed to send message: ${err.message}`
     console.error(err)
@@ -186,7 +189,6 @@ header {
   line-height: 1.5;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   padding: 20px;
   box-sizing: border-box;
 }
