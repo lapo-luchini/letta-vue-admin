@@ -109,7 +109,7 @@ const handleEnter = (event) => {
           </option>
         </select>
       </div>
-      <div>
+      <div v-if="memoryBlocks.length > 0">
         Core memory:
         <button
           v-for="block in memoryBlocks"
@@ -173,6 +173,12 @@ const handleEnter = (event) => {
 <style scoped>
 header {
   line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 200px;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .logo {
@@ -265,6 +271,11 @@ header {
 .message-bubble.tool_return_message {
   background-color: #495057;
   color: #fff;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 textarea {
