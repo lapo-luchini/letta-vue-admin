@@ -107,8 +107,9 @@ const handleEnter = (event) => {
   <header>
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
-    <div class="wrapper">
-      <div>
+    <div class="header-container">
+      <div class="agent-select">
+        <h3>Agent</h3>
         <select id="agents" v-model="selectedAgent" :disabled="isLoading.agents">
           <option value="">Select an agent:</option>
           <option v-for="agent in agents" :key="agent.id" :value="agent.id">
@@ -136,7 +137,7 @@ const handleEnter = (event) => {
   </header>
 
   <main>
-    <div id="messages">
+    <div id="messages" class="message-list">
       <div class="message" v-for="message in messages" :key="message.id">
         <div class="message-icon" :title="message.messageType">
           <span v-if="message.messageType === 'user_message'">👤</span>
@@ -207,6 +208,32 @@ main {
   margin: 0 auto 2rem;
 }
 
+.header-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px;
+  border-right: 1px solid #444;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.agent-select {
+  padding: 10px 12px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background: #1e1e1e;
+  color: #fff;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.agent-select:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
 .core-memory {
   margin-top: 20px;
   padding: 15px;
@@ -233,12 +260,12 @@ main {
   font-weight: bold;
 }
 
-#messages {
+.message-list {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px;
+  gap: 15px;
+  padding: 15px;
   overflow-y: auto;
 }
 
@@ -336,12 +363,6 @@ pre {
 
   .logo {
     margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
   }
 }
 </style>
