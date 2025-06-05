@@ -92,7 +92,7 @@ const handleEnter = (event) => {
           </option>
         </select>
       </div>
-      <div v-if="memoryBlocks.length > 0">
+      <div v-if="memoryBlocks.length > 0" class="core-memory">
         <h3>Core Memory</h3>
         <ul>
           <li v-for="block in memoryBlocks" :key="block.id">
@@ -161,17 +161,30 @@ header {
   margin: 0 auto 2rem;
 }
 
-.close {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 24px;
-  cursor: pointer;
-  color: #fff;
+.core-memory {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #1e1e1e;
 }
 
-.modal-content p {
-  margin: 10px 0 0;
+.core-memory ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.core-memory li {
+  margin-bottom: 10px;
+  padding: 8px;
+  background-color: #2d2d2d;
+  border-left: 4px solid #007bff;
+  border-radius: 4px;
+}
+
+.core-memory strong {
+  color: #007bff;
+  font-weight: bold;
 }
 
 #messages {
