@@ -187,12 +187,8 @@ header {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  min-width: 250px; /* Fixed width for smaller screens */
-  max-width: 300px; /* Limit width on larger screens */
   padding: 20px;
   box-sizing: border-box;
-  border-right: 1px solid #444;
-  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 main {
@@ -213,7 +209,6 @@ main {
   flex-direction: column;
   gap: 15px;
   padding: 20px;
-  border-right: 1px solid #444;
   flex-shrink: 0;
   height: 100vh;
   overflow-y: auto;
@@ -286,7 +281,7 @@ main {
   background-color: #f1f1f1;
   padding: 12px 16px;
   border-radius: 12px;
-  max-width: 70%;
+  max-width: 80%;
   word-wrap: break-word;
   color: #000;
   position: relative;

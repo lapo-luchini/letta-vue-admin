@@ -29,7 +29,7 @@ a,
 
   #app {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 30% 70%;
     padding: 0 2rem;
   }
 }
