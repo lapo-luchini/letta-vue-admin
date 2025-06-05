@@ -3,6 +3,11 @@ import { ref, onMounted, watch } from 'vue'
 import { LettaClient } from '@letta-ai/letta-client'
 import { marked } from 'marked'
 
+// Types
+/** @typedef {{ id: string, name: string, description?: string }} Agent */
+/** @typedef {{ id: string, label: string, value: string }} MemoryBlock */
+/** @typedef {{ id: string, messageType: string, content?: string, reasoning?: string, toolCall?: object, toolReturn?: object }} Message */
+
 const letta = new LettaClient({
   baseUrl: '/',
 })
@@ -12,64 +17,84 @@ const markdownOptions = {
   breaks: true,
 }
 
-const agents = ref([])
-const selectedAgent = ref('')
-const memoryBlocks = ref([])
-const messages = ref([])
+// State
+const agents = ref([]) // Array<Agent>
+const selectedAgent = ref('') // string
+const memoryBlocks = ref([]) // Array<MemoryBlock>
+const messages = ref([]) // Array<Message>
 const newMessage = ref('')
+const error = ref(null)
+const isLoading = ref({
+  agents: false,
+  messages: false,
+  memory: false,
+})
 
+// Handle agent selection
+watch(selectedAgent, async (newAgentId) => {
+  if (!newAgentId) return
+
+  isLoading.value.messages = true
+  try {
+    memoryBlocks.value = await letta.agents.blocks.list(newAgentId)
+    messages.value = await letta.agents.messages.list(newAgentId)
+  } catch (err) {
+    error.value = `Failed to load agent data: ${err.message}`
+    console.error(err)
+  } finally {
+    isLoading.value.messages = false
+  }
+})
+
+// Fetch agents on mount
 onMounted(async () => {
+  isLoading.value.agents = true
   try {
     agents.value = await letta.agents.list()
-  } catch (error) {
-    console.error('Error fetching agents:', error)
+  } catch (err) {
+    error.value = `Failed to load agents: ${err.message}`
+    console.error(err)
+  } finally {
+    isLoading.value.agents = false
   }
 })
 
-watch(selectedAgent, async (newAgentId) => {
-  if (newAgentId) {
-    try {
-      memoryBlocks.value = await letta.agents.blocks.list(selectedAgent.value)
-      messages.value = await letta.agents.messages.list(newAgentId)
-    } catch (error) {
-      console.error('Error fetching messages:', error)
-    }
-  }
-})
-
+// Send message
 const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedAgent.value) return
 
   try {
     const msg = newMessage.value
     newMessage.value = ''
+
+    // Add user message
     messages.value.push({
+      id: Date.now().toString(),
       messageType: 'user_message',
       content: msg,
     })
+
+    // Stream response
     const response = await letta.agents.messages.createStream(selectedAgent.value, {
       messages: [
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: msg,
-            },
-          ],
+          content: [{ type: 'text', text: msg }],
         },
       ],
       // stream_tokens: true,
     })
+
     for await (const item of response) {
       messages.value.push(item)
     }
-  } catch (error) {
-    console.error('Error sending message:', error)
+  } catch (err) {
+    error.value = `Failed to send message: ${err.message}`
+    console.error(err)
   }
 }
 
-// Handle Enter key press to send message
+// Handle Enter key
 const handleEnter = (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
@@ -83,15 +108,21 @@ const handleEnter = (event) => {
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
     <div class="wrapper">
-      <HelloWorld msg="You did it!" />
       <div>
-        <select id="agents" v-model="selectedAgent">
+        <select id="agents" v-model="selectedAgent" :disabled="isLoading.agents">
           <option value="">Select an agent:</option>
           <option v-for="agent in agents" :key="agent.id" :value="agent.id">
             {{ agent.name }}
           </option>
         </select>
       </div>
+
+      <div v-if="error" class="error-message">
+        {{ error }}
+      </div>
+
+      <div v-if="isLoading.agents" class="loading">Loading agents...</div>
+
       <div v-if="memoryBlocks.length > 0" class="core-memory">
         <h3>Core Memory</h3>
         <ul>
@@ -135,13 +166,17 @@ const handleEnter = (event) => {
         </div>
       </div>
     </div>
+
     <div id="message-new" class="message-bubble user_message">
       <textarea
         v-model="newMessage"
         @keydown.enter="handleEnter"
         placeholder="Type a message..."
+        :disabled="isLoading.messages || !selectedAgent"
       ></textarea>
     </div>
+
+    <div v-if="isLoading.messages" class="loading">Loading messages...</div>
   </main>
 </template>
 
@@ -189,30 +224,33 @@ header {
 
 #messages {
   max-width: 70vw;
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .message {
-  position: relative;
   display: flex;
   align-items: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .message-icon {
-  margin-right: 10px;
-  font-size: 1.2em;
+  margin-right: 12px;
+  font-size: 1.4em;
   flex-shrink: 0;
-  cursor: help; /* Optional: to indicate it's a tooltip */
+  cursor: help;
 }
 
 .message-bubble {
   background-color: #f1f1f1;
-  padding: 10px 15px;
-  border-radius: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
   max-width: 70%;
   word-wrap: break-word;
-  color: #000; /* Dark text on light background */
-  overflow-x: auto;
+  color: #000;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .message-bubble.user_message {
@@ -236,17 +274,41 @@ header {
 pre {
   white-space: pre-wrap;
   word-wrap: break-word;
+  margin: 10px 0 0;
+  background: #2d2d2d;
+  padding: 10px;
+  border-radius: 6px;
+  color: #ccc;
 }
 
 textarea {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 10px;
   resize: none;
   font-family: inherit;
   font-size: 1rem;
   outline: none;
+  transition: border-color 0.3s;
+}
+
+textarea:focus {
+  border-color: #007bff;
+}
+
+.loading {
+  color: #666;
+  text-align: center;
+  padding: 10px;
+}
+
+.error-message {
+  color: #dc3545;
+  background: #f8d7da;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
 }
 
 @media (min-width: 1024px) {
