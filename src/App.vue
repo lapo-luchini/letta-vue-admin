@@ -105,7 +105,7 @@ const sendMessage = async () => {
           content: [{ type: 'text', text: msg }],
         },
       ],
-      // stream_tokens: true,
+      // streamTokens: true,
     })
 
     let reloadMemory = false
@@ -114,6 +114,7 @@ const sendMessage = async () => {
       if (item.messageType === 'tool_return_message' && item.status === 'OK') reloadMemory = true
     }
     if (reloadMemory) memoryBlocks.value = await letta.agents.blocks.list(selectedAgent.value)
+    contextWindow.value = await letta.agents.context.retrieve(selectedAgent.value).catch(() => null)
   } catch (err) {
     error.value = `Failed to send message: ${err.message}`
     console.error(err)
