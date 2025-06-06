@@ -1,4 +1,6 @@
 <script setup>
+/*eslint no-unused-vars: ["error", { "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]*/
+
 import { ref, onMounted, watch } from 'vue'
 import { LettaClient } from '@letta-ai/letta-client'
 import { marked } from 'marked'
@@ -19,14 +21,15 @@ const markdownOptions = {
 }
 
 // State
+const version = ref('') // string
 const agents = ref([]) // Array<Agent>
 const selectedAgent = ref('') // string
 const memoryBlocks = ref([]) // Array<MemoryBlock>
 const passages = ref([]) // Array<Passage>
 const expandedMemoryId = ref(null) // string
 const messages = ref([]) // Array<Message>
-const newMessage = ref('')
-const error = ref(null)
+const newMessage = ref('') // string
+const error = ref(null) // string
 const isLoading = ref({
   agents: false,
   messages: false,
@@ -35,14 +38,24 @@ const isLoading = ref({
 
 // Handle agent selection
 watch(selectedAgent, async (newAgentId) => {
+  memoryBlocks.value = []
+  passages.value = []
+  messages.value = []
+
   if (!newAgentId) return
 
   isLoading.value.messages = true
   try {
-    const blocks = await letta.agents.blocks.list(newAgentId)
+    // Load all values in parallel
+    const [blocks, passagesData, messagesData] = await Promise.all([
+      letta.agents.blocks.list(newAgentId),
+      letta.agents.passages.list(newAgentId),
+      letta.agents.messages.list(newAgentId),
+    ])
+
     memoryBlocks.value = blocks.sort((a, b) => a.id.localeCompare(b.id))
-    passages.value = await letta.agents.passages.list(newAgentId)
-    messages.value = await letta.agents.messages.list(newAgentId)
+    passages.value = passagesData
+    messages.value = messagesData
   } catch (err) {
     error.value = `Failed to load agent data: ${err.message}`
     console.error(err)
@@ -55,6 +68,7 @@ watch(selectedAgent, async (newAgentId) => {
 onMounted(async () => {
   isLoading.value.agents = true
   try {
+    version.value = (await letta.health.check()).version
     agents.value = await letta.agents.list()
   } catch (err) {
     error.value = `Failed to load agents: ${err.message}`
@@ -102,6 +116,14 @@ const sendMessage = async () => {
   }
 }
 
+const formatJSON = (str) => {
+  try {
+    return JSON.stringify(JSON.parse(str), null, 2)
+  } catch (ignore) {
+    return ''
+  }
+}
+
 // Handle Enter key
 const handleEnter = (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
@@ -120,9 +142,12 @@ const toggleExpand = (id) => {
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
     <div class="header-container">
+      Letta {{ version }}
+
       <div class="agent-select">
         <h3>Agent</h3>
-        <select id="agents" v-model="selectedAgent" :disabled="isLoading.agents">
+        <div v-if="isLoading.agents" class="loading">Loading…</div>
+        <select id="agents" v-model="selectedAgent" v-if="!isLoading.agents">
           <option value="">Select an agent:</option>
           <option v-for="agent in agents" :key="agent.id" :value="agent.id">
             {{ agent.name }}
@@ -133,8 +158,6 @@ const toggleExpand = (id) => {
       <div v-if="error" class="error-message">
         {{ error }}
       </div>
-
-      <div v-if="isLoading.agents" class="loading">Loading agents...</div>
 
       <div v-if="memoryBlocks.length > 0" class="memories core-memory">
         <h3>Core Memory</h3>
@@ -181,11 +204,11 @@ const toggleExpand = (id) => {
           ></div>
           <div v-else-if="message.toolCall">
             <strong>{{ message.toolCall.name }}</strong>
-            <pre>{{ JSON.stringify(JSON.parse(message.toolCall.arguments), null, 2) }}</pre>
+            <pre>{{ formatJSON(message.toolCall.arguments) }}</pre>
           </div>
           <div v-else-if="message.toolReturn">
             <strong>{{ message.name }}</strong>
-            <pre>{{ JSON.stringify(JSON.parse(message.toolReturn), null, 2) }}</pre>
+            <pre>{{ formatJSON(message.toolReturn) }}</pre>
           </div>
           <div v-else>
             <pre><code>{{ JSON.stringify(message, null, 2) }}</code></pre>
