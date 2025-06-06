@@ -24,6 +24,7 @@ const markdownOptions = {
 const version = ref('') // string
 const agents = ref([]) // Array<Agent>
 const selectedAgent = ref('') // string
+const contextWindow = ref(null)
 const memoryBlocks = ref([]) // Array<MemoryBlock>
 const passages = ref([]) // Array<Passage>
 const expandedMemoryId = ref(null) // string
@@ -38,6 +39,7 @@ const isLoading = ref({
 
 // Handle agent selection
 watch(selectedAgent, async (newAgentId) => {
+  contextWindow.value = null
   memoryBlocks.value = []
   passages.value = []
   messages.value = []
@@ -47,12 +49,14 @@ watch(selectedAgent, async (newAgentId) => {
   isLoading.value.messages = true
   try {
     // Load all values in parallel
-    const [blocks, passagesData, messagesData] = await Promise.all([
+    const [contextWindowData, blocks, passagesData, messagesData] = await Promise.all([
+      letta.agents.context.retrieve(newAgentId),
       letta.agents.blocks.list(newAgentId),
       letta.agents.passages.list(newAgentId),
       letta.agents.messages.list(newAgentId),
     ])
 
+    contextWindow.value = contextWindowData
     memoryBlocks.value = blocks.sort((a, b) => a.id.localeCompare(b.id))
     passages.value = passagesData
     messages.value = messagesData
@@ -157,6 +161,23 @@ const toggleExpand = (id) => {
 
       <div v-if="error" class="error-message">
         {{ error }}
+      </div>
+
+      <div class="agent-select" v-if="contextWindow !== null">
+        <h3>Context</h3>
+        <div class="progress-container">
+          <div
+            class="progress-bar"
+            :style="{
+              width: `${(contextWindow.contextWindowSizeCurrent / contextWindow.contextWindowSizeMax) * 100}%`,
+            }"
+          >
+            <div class="progress-label">
+              {{ contextWindow.contextWindowSizeCurrent }} /
+              {{ contextWindow.contextWindowSizeMax }}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-if="memoryBlocks.length > 0" class="memories core-memory">
@@ -275,6 +296,32 @@ main {
 .agent-select:focus {
   border-color: #007bff;
   outline: none;
+}
+
+/* Progress Bar Styles */
+.progress-container {
+  width: 100%;
+  background-color: #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress-bar {
+  height: 20px;
+  background-color: #007bff;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-label {
+  color: white;
+  font-size: 12px;
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  transform: translate(-50%, -50%);
 }
 
 .memories {
