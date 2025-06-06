@@ -227,8 +227,11 @@ const toggleExpand = (id) => {
             <pre>{{ formatJSON(message.toolCall.arguments) }}</pre>
           </div>
           <div v-else-if="message.toolReturn">
+            <span v-if="message.status === 'success'">✅</span>
+            <span v-else>❌</span>
             <strong>{{ message.name }}</strong>
-            <pre>{{ formatJSON(message.toolReturn) }}</pre>
+            {{ message.status }}
+            <pre v-if="message.status !== 'success'">{{ message.toolReturn }}</pre>
           </div>
           <div v-else>
             <pre><code>{{ JSON.stringify(message, null, 2) }}</code></pre>
