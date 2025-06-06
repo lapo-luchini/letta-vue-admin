@@ -258,16 +258,19 @@ header {
   line-height: 1.5;
   display: flex;
   flex-direction: column;
+  height: 100vh;
   padding: 20px;
+  overflow-y: auto;
   box-sizing: border-box;
 }
 
 main {
-  flex: 1; /* Take up remaining space */
+  flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100vh;
   padding: 20px;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .logo {
@@ -281,8 +284,6 @@ main {
   gap: 15px;
   padding: 20px;
   flex-shrink: 0;
-  height: 100vh;
-  overflow-y: auto;
 }
 
 .agent-select {
@@ -375,7 +376,6 @@ main {
   flex-direction: column;
   gap: 15px;
   padding: 15px;
-  overflow-y: auto;
 }
 
 .message {
