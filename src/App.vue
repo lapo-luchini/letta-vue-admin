@@ -7,6 +7,7 @@ import { marked } from 'marked'
 /** @typedef {{ id: string, name: string, description?: string }} Agent */
 /** @typedef {{ id: string, label: string, value: string }} MemoryBlock */
 /** @typedef {{ id: string, messageType: string, content?: string, reasoning?: string, toolCall?: object, toolReturn?: object }} Message */
+/** @typedef {{ id: string, text: string }} Passage */
 
 const letta = new LettaClient({
   baseUrl: '/',
@@ -21,6 +22,8 @@ const markdownOptions = {
 const agents = ref([]) // Array<Agent>
 const selectedAgent = ref('') // string
 const memoryBlocks = ref([]) // Array<MemoryBlock>
+const passages = ref([]) // Array<Passage>
+const expandedMemoryId = ref(null) // string
 const messages = ref([]) // Array<Message>
 const newMessage = ref('')
 const error = ref(null)
@@ -36,7 +39,9 @@ watch(selectedAgent, async (newAgentId) => {
 
   isLoading.value.messages = true
   try {
-    memoryBlocks.value = await letta.agents.blocks.list(newAgentId)
+    const blocks = await letta.agents.blocks.list(newAgentId)
+    memoryBlocks.value = blocks.sort((a, b) => a.id.localeCompare(b.id))
+    passages.value = await letta.agents.passages.list(newAgentId)
     messages.value = await letta.agents.messages.list(newAgentId)
   } catch (err) {
     error.value = `Failed to load agent data: ${err.message}`
@@ -104,6 +109,10 @@ const handleEnter = (event) => {
     sendMessage()
   }
 }
+
+const toggleExpand = (id) => {
+  expandedMemoryId.value = expandedMemoryId.value === id ? null : id
+}
 </script>
 
 <template>
@@ -127,12 +136,26 @@ const handleEnter = (event) => {
 
       <div v-if="isLoading.agents" class="loading">Loading agents...</div>
 
-      <div v-if="memoryBlocks.length > 0" class="core-memory">
+      <div v-if="memoryBlocks.length > 0" class="memories core-memory">
         <h3>Core Memory</h3>
         <ul>
-          <li v-for="block in memoryBlocks" :key="block.id">
+          <li
+            v-for="block in memoryBlocks"
+            :key="block.id"
+            @click="toggleExpand(block.id)"
+            :class="{ expanded: expandedMemoryId === block.id }"
+          >
             <strong>{{ block.label }}</strong
             >: {{ block.value }}
+          </li>
+        </ul>
+      </div>
+
+      <div v-if="passages.length > 0" class="memories passages">
+        <h3>Memories</h3>
+        <ul>
+          <li v-for="block in passages" :key="block.id">
+            {{ block.text }}
           </li>
         </ul>
       </div>
@@ -231,7 +254,7 @@ main {
   outline: none;
 }
 
-.core-memory {
+.memories {
   margin-top: 20px;
   padding: 15px;
   border: 1px solid #444;
@@ -239,20 +262,30 @@ main {
   background-color: #1e1e1e;
 }
 
-.core-memory ul {
+.memories ul {
   list-style-type: none;
   padding-left: 0;
 }
 
-.core-memory li {
+.memories li {
   margin-bottom: 10px;
   padding: 8px;
   background-color: #2d2d2d;
   border-left: 4px solid #007bff;
   border-radius: 4px;
+  overflow: hidden;
+  max-height: 7.5em;
+  transition:
+    max-height 0.3s ease,
+    overflow 0.3s ease;
 }
 
-.core-memory strong {
+.memories li.expanded {
+  max-height: none;
+  overflow: visible;
+}
+
+.memories strong {
   color: #007bff;
   font-weight: bold;
 }
