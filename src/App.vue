@@ -50,7 +50,7 @@ watch(selectedAgent, async (newAgentId) => {
   try {
     // Load all values in parallel
     const [contextWindowData, blocks, passagesData, messagesData] = await Promise.all([
-      letta.agents.context.retrieve(newAgentId),
+      letta.agents.context.retrieve(newAgentId).catch(() => null),
       letta.agents.blocks.list(newAgentId),
       letta.agents.passages.list(newAgentId),
       letta.agents.messages.list(newAgentId),
@@ -171,11 +171,10 @@ const toggleExpand = (id) => {
             :style="{
               width: `${(contextWindow.contextWindowSizeCurrent / contextWindow.contextWindowSizeMax) * 100}%`,
             }"
-          >
-            <div class="progress-label">
-              {{ contextWindow.contextWindowSizeCurrent }} /
-              {{ contextWindow.contextWindowSizeMax }}
-            </div>
+          ></div>
+          <div class="progress-label">
+            {{ contextWindow.contextWindowSizeCurrent }} /
+            {{ contextWindow.contextWindowSizeMax }}
           </div>
         </div>
       </div>
@@ -300,28 +299,35 @@ main {
 
 /* Progress Bar Styles */
 .progress-container {
+  position: relative;
   width: 100%;
   background-color: #eee;
   border-radius: 8px;
   overflow: hidden;
   margin-top: 10px;
+  height: 20px;
 }
 
 .progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
   height: 20px;
   background-color: #007bff;
   border-radius: 8px;
   transition: width 0.3s ease;
-  position: relative;
+  z-index: 1;
 }
 
 .progress-label {
-  color: white;
-  font-size: 12px;
   position: absolute;
-  top: 10%;
-  left: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 50%;
   transform: translate(-50%, -50%);
+  color: black;
+  font-size: 12px;
+  z-index: 2;
 }
 
 .memories {
