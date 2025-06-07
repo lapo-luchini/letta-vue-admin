@@ -27,7 +27,6 @@ const selectedAgent = ref('') // string
 const contextWindow = ref(null)
 const memoryBlocks = ref([]) // Array<MemoryBlock>
 const passages = ref([]) // Array<Passage>
-const expandedMemoryId = ref(null) // string
 const messages = ref([]) // Array<Message>
 const newMessage = ref('') // string
 const error = ref(null) // string
@@ -140,10 +139,6 @@ const handleEnter = (event) => {
     sendMessage()
   }
 }
-
-const toggleExpand = (id) => {
-  expandedMemoryId.value = expandedMemoryId.value === id ? null : id
-}
 </script>
 
 <template>
@@ -187,12 +182,7 @@ const toggleExpand = (id) => {
       <div v-if="memoryBlocks.length > 0" class="memories core-memory">
         <h3>Core Memory</h3>
         <ul>
-          <li
-            v-for="block in memoryBlocks"
-            :key="block.id"
-            @click="toggleExpand(block.id)"
-            :class="{ expanded: expandedMemoryId === block.id }"
-          >
+          <li v-for="block in memoryBlocks" :key="block.id">
             <strong>{{ block.label }}</strong
             >: {{ block.value }}
           </li>
@@ -365,9 +355,10 @@ main {
     overflow 0.3s ease;
 }
 
-.memories li.expanded {
+.memories li:hover {
   max-height: none;
   overflow: visible;
+  border-left: 4px solid #3399ff; /* lighter blue on hover */
 }
 
 .memories strong {
