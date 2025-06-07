@@ -139,6 +139,23 @@ const handleEnter = (event) => {
     sendMessage()
   }
 }
+
+const loadPreviousMessages = async () => {
+  if (!selectedAgent.value) return
+  isLoading.value.messages = true
+  try {
+    messages.value = (
+      await letta.agents.messages.list(selectedAgent.value, {
+        before: messages.value[0].id,
+      })
+    ).concat(messages.value)
+  } catch (err) {
+    error.value = `Failed to load messages: ${err.message}`
+    console.error(err)
+  } finally {
+    isLoading.value.messages = false
+  }
+}
 </script>
 
 <template>
@@ -201,6 +218,13 @@ const handleEnter = (event) => {
   </header>
 
   <main>
+    <button
+      class="load-button"
+      @click="loadPreviousMessages"
+      :disabled="isLoading.messages || !selectedAgent"
+    >
+      Load Previous Messages
+    </button>
     <div id="messages" class="message-list">
       <div class="message" v-for="message in messages" :key="message.id">
         <div class="message-icon" :title="message.messageType">
@@ -364,6 +388,22 @@ main {
 .memories strong {
   color: #007bff;
   font-weight: bold;
+}
+
+.load-button {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.load-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 .message-list {
