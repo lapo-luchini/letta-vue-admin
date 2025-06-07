@@ -1,7 +1,7 @@
 <script setup>
 /*eslint no-unused-vars: ["error", { "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]*/
 
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { LettaClient } from '@letta-ai/letta-client'
 import { marked } from 'marked'
 
@@ -60,6 +60,10 @@ watch(selectedAgent, async (newAgentId) => {
     memoryBlocks.value = blocks.sort((a, b) => a.id.localeCompare(b.id))
     passages.value = passagesData
     messages.value = messagesData
+    // wait until DOM is updated, then trigger jQuery change event on referenced element
+    nextTick(() => {
+      document.getElementById('message-new').scrollIntoView()
+    })
   } catch (err) {
     error.value = `Failed to load agent data: ${err.message}`
     console.error(err)
