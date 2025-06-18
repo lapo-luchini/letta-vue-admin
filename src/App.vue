@@ -259,7 +259,7 @@ const loadPreviousMessages = async () => {
       </div>
     </div>
 
-    <div id="message-new" class="message-bubble user_message">
+    <div id="message-new" class="message-bubble user_message" v-if="selectedAgent">
       <textarea
         v-model="newMessage"
         @keydown.enter="handleEnter"
